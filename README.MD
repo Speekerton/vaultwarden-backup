@@ -1,12 +1,13 @@
-Simple script for automatically backing up Vaultwarden server data via cron.
+Simple script for automatically backing up Vaultwarden server data as gpg encrypted tar archive and as `KeePassXC` database via cron.
 The script is designed to work with systemd `vaultwarden.service` (e.g. in a Proxmox LXC).
 
-### Required commands:
+### Required:
 - `rclone`
 - `tar`
 - `gpg`
 - [`bw`](https://bitwarden.com/help/cli/)
 - `systemctl`
+- `python3-lxml`
 
 ### Usage:
 ```bash
