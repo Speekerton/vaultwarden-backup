@@ -1,0 +1,9 @@
+[Unit]
+Description=Vaultwarden backup script
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory={{project_dir}}/src
+EnvironmentFile={{project_dir}}/.env
+ExecStart={{project_dir}}/.venv/bin/python {{project_dir}}/src/main.py
