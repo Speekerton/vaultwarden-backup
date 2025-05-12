@@ -37,7 +37,8 @@ def add_entries(kp, items_raw, groups):
         name = item.get("name", f"Nameless-{str(uuid4())}")
         username = item.get("login", {}).get("username", "")
         password = item.get("login", {}).get("password", "")
-        url = item.get("login", {}).get("uris", [{}])[0].get("uri")
+        url = item.get("login", {}).get("uris", [])
+        url = url[0].get("uri") if url else None
         notes = item.get("notes")
         folder_id = item.get("folderId")
         group = groups.get(folder_id, kp.root_group)
