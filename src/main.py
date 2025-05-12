@@ -73,7 +73,7 @@ class Bw:
     def _configure(self):
         l.info("Configure vaultwarden server...")
         env = local.env(BITWARDENCLI_APPDATA_DIR=SCRIPT_ETC_DIR) if os.path.isdir(SCRIPT_ETC_DIR) else nullcontext()
-        with env
+        with env:
             bw["config", "server", self.cfg.vaultwarden_url]()
         l.info("Vaultwarden server configured")
         
