@@ -70,18 +70,21 @@ class Bw:
         # Return False to propagate exceptions, True to suppress
         return False
 
+    def _appdata_env(self):
+        return local.env(BITWARDENCLI_APPDATA_DIR=SCRIPT_ETC_DIR) if os.path.isdir(SCRIPT_ETC_DIR) else nullcontext()
+
     def _configure(self):
         l.info("Configure vaultwarden server...")
-        env = local.env(BITWARDENCLI_APPDATA_DIR=SCRIPT_ETC_DIR) if os.path.isdir(SCRIPT_ETC_DIR) else nullcontext()
-        with env:
+        with self._appdata_env():
             bw["config", "server", self.cfg.vaultwarden_url]()
         l.info("Vaultwarden server configured")
         
     def _login(self):
         l.info("Login into vaultwarden...")
         try:
-            with local.env(BW_CLIENTID=self.cfg.client_id, BW_CLIENTSECRET=self.cfg.client_secret):
-                bw["login", "--apikey"]()
+            with self._appdata_env():
+                with local.env(BW_CLIENTID=self.cfg.client_id, BW_CLIENTSECRET=self.cfg.client_secret):
+                    bw["login", "--apikey"]()
             l.info("Logged in")
         except Exception as e:
             if "You are already logged in" in str(e):
@@ -93,17 +96,20 @@ class Bw:
         
     def _logout(self):
         l.info("Logout from vaultwarden...")
-        bw["logout"]()
+        with self._appdata_env():
+            bw["logout"]()
         l.info("Logged out")
         
     def _sync(self):
         l.info("Sync vaultwarden...")
-        bw["sync"]()
+        with self._appdata_env():
+            bw["sync"]()
         l.info("Vaultwarden synced")
         
     def export(self):
         l.info("Export vaultwarden data to json format...")
-        (echo["-e", self.cfg.master_password] | bw["export", "--output", self.cfg.vaultwarden_json_path(), "--format", "json"])()
+        with self._appdata_env():
+            (echo["-e", self.cfg.master_password] | bw["export", "--output", self.cfg.vaultwarden_json_path(), "--format", "json"])()
         l.info("Vaultwarden data exported to json format")
 
 
