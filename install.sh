@@ -13,11 +13,17 @@ main() {
     echo "Success!"
 
     echo "Copy systemd services"
-    cp "${SCRIPT_DIR}/../systemd/vaultwarden-backup.service" /etc/systemd/system
-    cp "${SCRIPT_DIR}/../systemd/vaultwarden-backup.timer" /etc/systemd/system
+    cp "${SCRIPT_DIR}/systemd/vaultwarden-backup.service" /etc/systemd/system
+    cp "${SCRIPT_DIR}/systemd/vaultwarden-backup.timer" /etc/systemd/system
     sed -i "s|{{project_dir}}|${SCRIPT_DIR}|g" /etc/systemd/system/vaultwarden-backup.service
     systemctl daemon-reexec
     systemctl daemon-reload
+    echo "Success!"
+
+    echo "Copy .env"
+    mkdir -p "/etc/vaultwarden-backup"
+    cp "${SCRIPT_DIR}/example.env" "/etc/vaultwarden-backup/.env"
+    echo "Success!"
 
     echo "Done"
 }
