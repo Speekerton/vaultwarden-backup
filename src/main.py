@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from plumbum import local
 from plumbum.cmd import cp, tar, gpg, mv, systemctl, mktemp, bw, mkdir, rclone, echo
 from datetime import datetime
+from contextlib import nullcontext
 import logging
 import os
 import sys
@@ -19,6 +20,7 @@ import shutil
 l = logging.getLogger(__name__)
 SCRIPT_PATH = os.path.abspath(__file__)
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
+SCRIPT_ETC_DIR = "/etc/vaultwarden-backup"
 
 class VaultwardenService:
     def __init__(self, cfg):
@@ -56,6 +58,7 @@ class Bw:
         self.cfg = cfg
     
     def __enter__(self):
+        self._configure()
         self._login()
         self._sync()
         # Initialize or allocate the resource here
@@ -66,6 +69,13 @@ class Bw:
         # Cleanup or release the resource here
         # Return False to propagate exceptions, True to suppress
         return False
+
+    def _configure(self):
+        l.info("Configure vaultwarden server...")
+        env = local.env(BITWARDENCLI_APPDATA_DIR=SCRIPT_ETC_DIR) if os.path.isdir(SCRIPT_ETC_DIR) else nullcontext()
+        with env
+            bw["config", "server", self.cfg.vaultwarden_url]()
+        l.info("Vaultwarden server configured")
         
     def _login(self):
         l.info("Login into vaultwarden...")
@@ -176,7 +186,7 @@ def on_error(exception):
 
 # Define the Config structure to store the parsed arguments
 class Config:
-    def __init__(self, master_password=None, client_id=None, client_secret=None, data_dir=None, temp_dir=None, backups_dir=None, backups_keep_last=None, remotes=None):
+    def __init__(self, master_password=None, client_id=None, client_secret=None, data_dir=None, temp_dir=None, backups_dir=None, backups_keep_last=None, remotes=None, vaultwarden_url=None):
         self.master_password = master_password
         self.client_id = client_id
         self.client_secret = client_secret
@@ -185,6 +195,7 @@ class Config:
         self.backups_dir = backups_dir
         self.backups_keep_last = backups_keep_last
         self.remotes = remotes
+        self.vaultwarden_url = vaultwarden_url
 
     def __str__(self):
         return (f"Config(master_password={self.master_password}, "
@@ -194,7 +205,8 @@ class Config:
                 f"temp_dir={self.temp_dir}, "
                 f"backups_dir={self.backups_dir}, "
                 f"backups_keep_last={self.backups_keep_last}, "
-                f"remotes={self.remotes})")
+                f"remotes={self.remotes}, "
+                f"vaultwarden_url={self.vaultwarden_url})")
 
     def verify(self):
         if not self.master_password:
@@ -213,6 +225,8 @@ class Config:
             raise Exception("'--backups-keep-last' or 'BACKUPS_KEEP_LAST' is required")
         if not self.remotes:
             raise Exception("'--remotes' or 'REMOTES' is required")
+        if not self.vaultwarden_url:
+            raise Exception("'--vaultwarden-url' or 'VAULTWARDEN_URL' is required")
             
 
     def keepass_db_path(self):
@@ -250,6 +264,7 @@ def parse_arguments():
     parser.add_argument("--backups-dir", type=str, help="Backups directory.")
     parser.add_argument("--backups-keep-last", type=int, help="Last N backups that need to keep.")
     parser.add_argument("--remotes", nargs="+", type=str, help="List of rclone remote paths")
+    parser.add_argument("--vaultwarden-url", type=str, help="Vaultwarden server URL.")
 
     # Parse command-line arguments
     args = parser.parse_args()
@@ -264,12 +279,13 @@ def parse_arguments():
     data_dir = args.data_dir or os.getenv("DATA_DIR")
     backups_keep_last = args.backups_keep_last or os.getenv("BACKUPS_KEEP_LAST") or 7
     remotes = args.remotes or os.getenv("REMOTES") and os.getenv("REMOTES").split() or None
+    vaultwarden_url = args.vaultwarden_url or os.getenv("VAULTWARDEN_URL")
     
     temp_dir = mktemp["-d", "-t", "vaultwarden-backup.XXXXXXXXXXXXXXXXXXX"]().rstrip()
     backups_dir = args.backups_dir or os.getenv('BACKUPS_DIR') or f"{SCRIPT_DIR}/backups"
 
     # Return a Config object
-    return Config(master_password, client_id, client_secret, data_dir, temp_dir, backups_dir, backups_keep_last, remotes)
+    return Config(master_password, client_id, client_secret, data_dir, temp_dir, backups_dir, backups_keep_last, remotes, vaultwarden_url)
 
 
 # Factory function to create a signal handler with access to config
