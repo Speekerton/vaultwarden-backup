@@ -7,6 +7,7 @@ The script is designed to work with systemd `vaultwarden.service` (e.g. in a Pro
 - `gpg`
 - [`bw`](https://bitwarden.com/help/cli/)
 - `systemctl`
+- `pip`
 - `python3-lxml`
 
 ### Usage:

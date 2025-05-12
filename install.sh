@@ -20,10 +20,14 @@ main() {
     systemctl daemon-reload
     echo "Success!"
 
-    echo "Copy .env"
-    mkdir -p "/etc/vaultwarden-backup"
-    cp "${SCRIPT_DIR}/example.env" "/etc/vaultwarden-backup/.env"
-    echo "Success!"
+    if [ ! -e "/etc/vaultwarden-backup/.env" ]; then
+        echo "Copy .env"
+        mkdir -p "/etc/vaultwarden-backup"
+        cp "${SCRIPT_DIR}/example.env" "/etc/vaultwarden-backup/.env"
+        echo "Success!"
+    else
+        echo ".env file already exists"
+    fi
 
     echo "Done"
 }
