@@ -20,6 +20,7 @@ git clone git@github.com:LazyMechanic/vaultwarden-backup.git /opt/vaultwarden-ba
 /opt/vaultwarden-backup/install.sh
 
 # Configure rclone remotes via `rclone config`
+# Configure bw server via `bw config server <URL>`
 # Configure environment variables in `.env` file
 
 # Adjust the OnCalendar field in /etc/systemd/system/vaultwarden-backup.timer if needed
