@@ -276,14 +276,14 @@ def parse_arguments():
     args = parser.parse_args()
 
     # Retrieve parameters from command-line arguments or environment variables
-    verbose = args.verbose or os.getenv("VERBOSE") or 0
+    verbose = int(args.verbose or os.getenv("VERBOSE") or 0)
     utils.setup_logging(verbose)
     
     master_password = args.master_password or os.getenv("MASTER_PASSWORD")
     client_id = args.client_id or os.getenv("CLIENT_ID")
     client_secret = args.client_secret or os.getenv("CLIENT_SECRET")
     data_dir = args.data_dir or os.getenv("DATA_DIR")
-    backups_keep_last = args.backups_keep_last or os.getenv("BACKUPS_KEEP_LAST") or 7
+    backups_keep_last = int(args.backups_keep_last or os.getenv("BACKUPS_KEEP_LAST") or 7)
     remotes = args.remotes or os.getenv("REMOTES") and os.getenv("REMOTES").split() or None
     vaultwarden_url = args.vaultwarden_url or os.getenv("VAULTWARDEN_URL")
     
