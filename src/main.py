@@ -21,7 +21,6 @@ l = logging.getLogger(__name__)
 SCRIPT_PATH = os.path.abspath(__file__)
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
 SCRIPT_ETC_DIR = "/etc/vaultwarden-backup"
-SYNC_ATTEMPTS = 3
 
 class VaultwardenService:
     def __init__(self, cfg):
@@ -174,7 +173,7 @@ def sync_backups(cfg):
     l.info("Sync backups...")
     for remote in cfg.remotes:
         l.info(f"Syncing {remote}...")
-        for attempt in range(0, SYNC_ATTEMPTS):
+        for attempt in range(0, cfg.sync_attempts):
             try:
                 l.debug(f"Attempt {attempt}")
                 rclone["sync", cfg.backups_dir, remote, "--progress"]()
@@ -182,7 +181,7 @@ def sync_backups(cfg):
                 break
             except Exception as e:
                 l.error(f"Failed to sync {remote}: {e}")
-                if attempt == SYNC_ATTEMPTS - 1:
+                if attempt == cfg.sync_attempts - 1:
                     l.warn("This was the last attempt")
 
     l.info("Backups synced")
@@ -202,7 +201,7 @@ def on_error(exception):
 
 # Define the Config structure to store the parsed arguments
 class Config:
-    def __init__(self, master_password=None, client_id=None, client_secret=None, data_dir=None, temp_dir=None, backups_dir=None, backups_keep_last=None, remotes=None, vaultwarden_url=None):
+    def __init__(self, master_password=None, client_id=None, client_secret=None, data_dir=None, temp_dir=None, backups_dir=None, backups_keep_last=None, remotes=None, vaultwarden_url=None, sync_attempts=None):
         self.master_password = master_password
         self.client_id = client_id
         self.client_secret = client_secret
@@ -212,6 +211,7 @@ class Config:
         self.backups_keep_last = backups_keep_last
         self.remotes = remotes
         self.vaultwarden_url = vaultwarden_url
+        self.sync_attempts = sync_attempts
 
     def __str__(self):
         return (f"Config(master_password={self.master_password}, "
@@ -222,7 +222,8 @@ class Config:
                 f"backups_dir={self.backups_dir}, "
                 f"backups_keep_last={self.backups_keep_last}, "
                 f"remotes={self.remotes}, "
-                f"vaultwarden_url={self.vaultwarden_url})")
+                f"vaultwarden_url={self.vaultwarden_url}, "
+                f"sync_attempts={self.sync_attempts})")
 
     def verify(self):
         if not self.master_password:
@@ -239,10 +240,16 @@ class Config:
             raise Exception("'--backups-dir' or 'BACKUPS_DIR' is required")
         if not self.backups_keep_last:
             raise Exception("'--backups-keep-last' or 'BACKUPS_KEEP_LAST' is required")
+        if self.backups_keep_last <=:
+            raise Exception("'--backups-keep-last' or 'BACKUPS_KEEP_LAST' should be positive number")
         if not self.remotes:
             raise Exception("'--remotes' or 'REMOTES' is required")
         if not self.vaultwarden_url:
             raise Exception("'--vaultwarden-url' or 'VAULTWARDEN_URL' is required")
+        if not self.sync_attempts:
+            raise Exception("'--sync-attempts' or 'SYNC_ATTEMPTS' is required")
+        if self.sync_attempts <= 0:
+            raise Exception("'--sync-attempts' or 'SYNC_ATTEMPTS' should be positive number")
             
 
     def keepass_db_path(self):
@@ -272,15 +279,16 @@ def parse_arguments():
     # Set up argparse for command-line argument parsing
     parser = argparse.ArgumentParser(description="Script for interacting with Vaultwarden and KeePass.")
     
-    parser.add_argument("-v", "--verbose", action="count", help="Logging verbosity level")
+    parser.add_argument("-v", "--verbose", action="count", help="Logging verbosity level.")
     parser.add_argument("--master-password", type=str, help="Vaultwarden master password.")
     parser.add_argument("--client-id", type=str, help="Vaultwarden client ID.")
     parser.add_argument("--client-secret", type=str, help="Vaultwarden client secret.")
     parser.add_argument("--data-dir", type=str, help="Path to the vaultwarden data directory.")
     parser.add_argument("--backups-dir", type=str, help="Backups directory.")
     parser.add_argument("--backups-keep-last", type=int, help="Last N backups that need to keep.")
-    parser.add_argument("--remotes", nargs="+", type=str, help="List of rclone remote paths")
+    parser.add_argument("--remotes", nargs="+", type=str, help="List of rclone remote paths.")
     parser.add_argument("--vaultwarden-url", type=str, help="Vaultwarden server URL.")
+    parser.add_argument("--sync-attempts", type=int, help="Number of attempts to synchronize with remotes")
 
     # Parse command-line arguments
     args = parser.parse_args()
@@ -296,12 +304,13 @@ def parse_arguments():
     backups_keep_last = int(args.backups_keep_last or os.getenv("BACKUPS_KEEP_LAST") or 7)
     remotes = args.remotes or os.getenv("REMOTES") and os.getenv("REMOTES").split() or None
     vaultwarden_url = args.vaultwarden_url or os.getenv("VAULTWARDEN_URL")
+    sync_attempts = int(args.sync_attempts or os.getenv("SYNC_ATTEMPTS") or 3)
     
     temp_dir = mktemp["-d", "-t", "vaultwarden-backup.XXXXXXXXXXXXXXXXXXX"]().rstrip()
     backups_dir = args.backups_dir or os.getenv('BACKUPS_DIR') or f"{SCRIPT_DIR}/backups"
 
     # Return a Config object
-    return Config(master_password, client_id, client_secret, data_dir, temp_dir, backups_dir, backups_keep_last, remotes, vaultwarden_url)
+    return Config(master_password, client_id, client_secret, data_dir, temp_dir, backups_dir, backups_keep_last, remotes, vaultwarden_url, sync_attempts)
 
 
 # Factory function to create a signal handler with access to config
