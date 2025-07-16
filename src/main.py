@@ -21,6 +21,7 @@ l = logging.getLogger(__name__)
 SCRIPT_PATH = os.path.abspath(__file__)
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
 SCRIPT_ETC_DIR = "/etc/vaultwarden-backup"
+SYNC_ATTEMPTS = 3
 
 class VaultwardenService:
     def __init__(self, cfg):
@@ -172,9 +173,18 @@ def rotate_backups(cfg):
 def sync_backups(cfg):
     l.info("Sync backups...")
     for remote in cfg.remotes:
-        l.info(f"Sync {remote}")
-        rclone["sync", cfg.backups_dir, remote, "--progress"]()
-        l.info(f"{remote} synced")
+        l.info(f"Syncing {remote}...")
+        for attempt in range(0, SYNC_ATTEMPTS):
+            try:
+                l.debug(f"Attempt {attempt}")
+                rclone["sync", cfg.backups_dir, remote, "--progress"]()
+                l.info(f"{remote} synced")
+                break
+            except Exception as e:
+                l.error(f"Failed to sync {remote}: {e}")
+                if attempt == SYNC_ATTEMPTS - 1:
+                    l.warn("This was the last attempt")
+
     l.info("Backups synced")
 
 
