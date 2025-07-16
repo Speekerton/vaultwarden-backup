@@ -240,7 +240,7 @@ class Config:
             raise Exception("'--backups-dir' or 'BACKUPS_DIR' is required")
         if not self.backups_keep_last:
             raise Exception("'--backups-keep-last' or 'BACKUPS_KEEP_LAST' is required")
-        if self.backups_keep_last <=:
+        if self.backups_keep_last <= 0:
             raise Exception("'--backups-keep-last' or 'BACKUPS_KEEP_LAST' should be positive number")
         if not self.remotes:
             raise Exception("'--remotes' or 'REMOTES' is required")
