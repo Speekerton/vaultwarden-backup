@@ -170,6 +170,10 @@ def rotate_backups(cfg):
 
 
 def sync_backups(cfg):
+    if not cfg.remotes:
+        l.info("No remotes configured, skipping sync")
+        return
+    
     l.info("Sync backups...")
     for remote in cfg.remotes:
         l.info(f"Syncing {remote}...")
@@ -242,8 +246,12 @@ class Config:
             raise Exception("'--backups-keep-last' or 'BACKUPS_KEEP_LAST' is required")
         if self.backups_keep_last <= 0:
             raise Exception("'--backups-keep-last' or 'BACKUPS_KEEP_LAST' should be positive number")
+        # if not self.remotes:
+            # raise Exception("'--remotes' or 'REMOTES' is required")
+        
         if not self.remotes:
-            raise Exception("'--remotes' or 'REMOTES' is required")
+            self.remotes = []
+        
         if not self.vaultwarden_url:
             raise Exception("'--vaultwarden-url' or 'VAULTWARDEN_URL' is required")
         if not self.sync_attempts:
