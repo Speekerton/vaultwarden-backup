@@ -3,6 +3,7 @@ import sys
 import os
 import psutil
 
+
 def is_systemd_child():
     try:
         parent = psutil.Process(os.getppid())
@@ -10,10 +11,11 @@ def is_systemd_child():
     except Exception:
         return False
 
+
 def setup_logging(verbosity_level: int):
     levels = [logging.INFO, logging.DEBUG]
     level = levels[min(verbosity_level, len(levels) - 1)]
-    
+
     if is_systemd_child():
         log_format = "%(module)s - %(levelname)s - %(message)s"
     else:
