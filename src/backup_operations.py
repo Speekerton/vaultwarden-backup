@@ -77,16 +77,18 @@ def do_archive_backup(cfg):
     l.info("Vaultwarden data archived")
 
     l.info("Encrypt archive with GPG...")
-    gpg[
+    # FIXED: Use stdin instead of command line parameter
+    gpg_process = gpg[
         "--batch",
         "--yes",
-        "--passphrase",
-        cfg.master_password,
+        "--passphrase-fd",
+        "0",
         "--symmetric",
         "--cipher-algo",
         "AES256",
         cfg.archive_path(),
-    ]()
+    ]
+    gpg_process(stdin=cfg.master_password.encode())
     l.info("Archive encrypted")
 
 
