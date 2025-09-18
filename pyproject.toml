@@ -1,0 +1,10 @@
+[project]
+name = "vaultwarden-backup"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "plumbum>=1.9.0",
+    "psutil>=7.1.0",
+    "pykeepass>=4.1.1.post1",
+    "python-dotenv>=1.1.1",
+]
