@@ -110,11 +110,18 @@ def parse_config_from_args(args):
     backups_keep_last = int(
         args.backups_keep_last or os.getenv("BACKUPS_KEEP_LAST") or 7
     )
-    remotes = args.remotes or (
-        os.getenv("REMOTES").split()  # type: ignore
-        if os.getenv("REMOTES") and os.getenv("REMOTES").strip()  # type: ignore
-        else []
-    )
+
+    # FIXED: Robust REMOTES parsing
+    if args.remotes:
+        remotes = args.remotes
+    else:
+        remotes_env = os.getenv("REMOTES")
+        if remotes_env is not None and remotes_env.strip():
+            # Split by whitespace and filter out empty strings
+            remotes = [r.strip() for r in remotes_env.split() if r.strip()]
+        else:
+            remotes = []
+
     vaultwarden_url = args.vaultwarden_url or os.getenv("VAULTWARDEN_URL")
     sync_attempts = int(args.sync_attempts or os.getenv("SYNC_ATTEMPTS") or 3)
 
