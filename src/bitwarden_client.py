@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-
 from plumbum import local
-from plumbum.cmd import bw, echo
+from plumbum.cmd import bw
 from contextlib import nullcontext
 import logging
 import os
+import tempfile
 
 l = logging.getLogger(__name__)  # noqa: E741
 
@@ -58,27 +57,53 @@ class Bw:
 
     def _logout(self):
         l.info("Logout from vaultwarden...")
-        with self._appdata_env():
-            bw["logout"]()
-        l.info("Logged out")
+        try:
+            with self._appdata_env():
+                bw["logout"]()
+            l.info("Logged out")
+        except Exception as e:
+            l.warning(f"Logout failed (may already be logged out): {e}")
 
     def _sync(self):
         l.info("Sync vaultwarden...")
-        with self._appdata_env():
-            bw["sync"]()
-        l.info("Vaultwarden synced")
+        try:
+            with self._appdata_env():
+                bw["sync"]()
+            l.info("Vaultwarden synced")
+        except Exception as e:
+            l.error(f"Sync failed: {e}")
+            raise
 
     def export(self):
+        """Export vaultwarden data using secure password handling."""
         l.info("Export vaultwarden data to json format...")
-        with self._appdata_env():
-            (
-                echo["-e", self.cfg.master_password]
-                | bw[
+        password_file = None
+        try:
+            # Create temporary file for password (no chmod to avoid container issues)
+            fd, password_file = tempfile.mkstemp(prefix="bw_export_pwd_", suffix=".tmp")
+            with os.fdopen(fd, "w") as f:
+                f.write(self.cfg.master_password)
+
+            with self._appdata_env():
+                # Use --passwordfile instead of piping echo
+                bw_export = bw[
                     "export",
                     "--output",
                     self.cfg.vaultwarden_json_path(),
                     "--format",
                     "json",
+                    "--passwordfile",
+                    password_file,
                 ]
-            )()
-        l.info("Vaultwarden data exported to json format")
+                bw_export()
+
+            l.info("Vaultwarden data exported to json format")
+
+        except Exception as e:
+            l.error(f"Export failed: {e}")
+            raise
+        finally:
+            # Clean up password file
+            if password_file and os.path.exists(password_file):
+                os.unlink(password_file)
+                l.debug("Temporary password file cleaned up")
