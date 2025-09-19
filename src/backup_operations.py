@@ -1,9 +1,10 @@
-from datetime import datetime
-from plumbum.cmd import tar, gpg, mv, mkdir, rclone
+import hashlib
 import logging
 import os
 import shutil
-import hashlib
+from datetime import datetime
+
+from plumbum.cmd import gpg, mkdir, mv, rclone, tar
 
 l = logging.getLogger(__name__)  # noqa: E741
 
@@ -112,7 +113,7 @@ def do_archive_backup(cfg):
         mv[cfg.vaultwarden_json_path(), f"{cfg.archive_dir_path()}/"]()
 
         l.info("Compress vaultwarden data into tar archive...")
-        tar["-cJf", cfg.archive_path(), "-C", cfg.temp_dir, cfg.archive_dir_name()]()
+        tar["-czf", cfg.archive_path(), "-C", cfg.temp_dir, cfg.archive_dir_name()]()
         l.info("Vaultwarden data archived")
 
         # Generate checksums for the unencrypted archive
@@ -143,9 +144,10 @@ def do_archive_backup(cfg):
 
 
 def do_keepass_backup(cfg):
-    from bitwarden_client import Bw
-    import keepass
     import json
+
+    import keepass
+    from bitwarden_client import Bw
 
     try:
         with Bw(cfg) as bw:

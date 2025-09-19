@@ -1,11 +1,11 @@
-#!/usr/bin/env python
-
 import argparse
 import json
-import pykeepass
 import logging
-import utils
 from uuid import uuid4
+
+import pykeepass
+
+import utils
 
 l = logging.getLogger(__name__)  # noqa: E741
 

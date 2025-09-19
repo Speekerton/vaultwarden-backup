@@ -1,9 +1,10 @@
-from plumbum import local
-from plumbum.cmd import bw
-from contextlib import nullcontext
 import logging
 import os
 import tempfile
+from contextlib import nullcontext
+
+from plumbum import local
+from plumbum.cmd import bw
 
 l = logging.getLogger(__name__)  # noqa: E741
 

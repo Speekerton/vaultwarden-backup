@@ -1,19 +1,17 @@
-#!/usr/bin/env python
-
 import argparse
 import logging
 import sys
 
-import utils
-from config import parse_config_from_args
-from temp_manager import secure_temp_directory
 from backup_operations import (
-    do_keepass_backup,
-    do_archive_backup,
     create_backup,
+    do_archive_backup,
+    do_keepass_backup,
     rotate_backups,
     sync_backups,
 )
+from config import parse_config_from_args
+from temp_manager import secure_temp_directory
+from utils import setup_logging
 
 l = logging.getLogger(__name__)  # noqa: E741
 
@@ -62,7 +60,7 @@ def main():
 
     # Setup logging
     verbose = int(args.verbose or 0)
-    utils.setup_logging(verbose)
+    setup_logging(verbose)
 
     # Parse config without temp_dir first
     config_partial = parse_config_from_args(args)
