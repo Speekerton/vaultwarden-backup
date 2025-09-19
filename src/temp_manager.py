@@ -1,5 +1,5 @@
-import tempfile
 import logging
+import tempfile
 from contextlib import contextmanager
 
 l = logging.getLogger(__name__)  # noqa: E741

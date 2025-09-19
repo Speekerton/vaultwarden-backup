@@ -1,7 +1,7 @@
-import sqlite3
+import logging
 import os
 import shutil
-import logging
+import sqlite3
 
 l = logging.getLogger(__name__)  # noqa: E741
 

@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+
 from dotenv import load_dotenv
 
 l = logging.getLogger(__name__)  # noqa: E741
