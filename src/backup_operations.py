@@ -94,7 +94,7 @@ def sync_backups(cfg):
                 except Exception as e:
                     l.error(f"Failed to sync {remote}: {e}")
                     if attempt == cfg.sync_attempts - 1:
-                        l.warn("This was the last attempt")
+                        l.warning("This was the last attempt")
 
         l.info("Backups synced")
     except Exception as e:
