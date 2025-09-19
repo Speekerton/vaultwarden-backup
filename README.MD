@@ -39,7 +39,7 @@ Recommend to get the lxc setup script from [Proxmox Helper Scripts Community](ht
 ### Required Tools
 
 Install these tools on your system (Mine is debian):  
-**NPM sufferred multiple breaches at the time this README updated (2025-07-19). Ensure no packages and dependencies are affected**
+**NPM sufferred multiple breaches at the time this README updated (2025-09-19). Ensure no packages and dependencies are affected**
 
 #### Ubuntu/Debian
 
